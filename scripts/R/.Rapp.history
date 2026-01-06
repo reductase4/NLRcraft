@@ -1,0 +1,2 @@
+load("/Users/qian/Documents/BCA/01-NLR/scripts/NLRcraft/scripts/R/final_rf_model_undersampling.rds")
+load("/Users/qian/Documents/BCA/01-NLR/scripts/NLRcraft/scripts/R/final_rf_model_undersampling.rds")
