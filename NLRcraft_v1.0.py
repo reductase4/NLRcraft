@@ -9,7 +9,6 @@ Major steps:
 1. Domain database building by Foldseek
 2. pLDDT-based structure filtering
 3. NLR identification based on structural alignments
-   (domain-level alignment -> protein-level inference)
 4. NLR classification based on structural clustering of N-terminal domains
 
 This script serves as the main controller of the NLRcraft pipeline.
