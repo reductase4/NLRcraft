@@ -51,7 +51,7 @@ NLRcraft/
 
 ```text
 python NLRcraft.py \
-  --structs predicted_structures/ \
+  --structs predicted_structures \
   --ids protein_ids.txt \
   --plddt 60
 ```
