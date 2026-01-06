@@ -2,172 +2,312 @@
 # -*- coding: utf-8 -*-
 
 """
-NLRcraft: A structural-homology-based pipeline for plant NLR detection and classification.
+NLRcraft: A structure-homology-based pipeline for plant NLR identification
+and classification.
 
-This script automates:
+Major steps:
 1. Domain database building by Foldseek
-2. pLDDT filtering
-3. Identification base on structural alignments
-4. Classification base on structural clustering of N-terminal domains
+2. pLDDT-based structure filtering
+3. NLR identification based on structural alignments
+   (domain-level alignment -> protein-level inference)
+4. NLR classification based on structural clustering of N-terminal domains
 
 This script serves as the main controller of the NLRcraft pipeline.
-
-Usage example:
-
-python NLRcraft.py \
-  --structs protein_structures \
-  --ids proteins_ids.txt \
-  --plddt pLDDT_cutoff_value
 """
 
 import os
-from datetime import datetime
-import subprocess
-import argparse
 import sys
+import argparse
+import subprocess
+from datetime import datetime
+
+
+# ================================================================
+# Utility functions
+# ================================================================
 
 def timestamp():
+    """Return current timestamp string."""
     return datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
-def run(cmd, label):
+
+def run(cmd, label, cwd=None):
+    """
+    Execute a command-line program with logging and error handling.
+
+    Parameters
+    ----------
+    cmd : list
+        Command and arguments.
+    label : str
+        Description of the pipeline step.
+    cwd : str, optional
+        Working directory for the command.
+    """
     print(f"\n[{timestamp()}] {label}")
     print(f"[{timestamp()}]   $ {' '.join(cmd)}")
-    
-    res = subprocess.run(cmd)
+
+    res = subprocess.run(cmd, cwd=cwd)
     if res.returncode != 0:
         print(f"[{timestamp()}] ERROR: {label} failed.")
         sys.exit(1)
+
     print(f"[{timestamp()}] Completed: {label}")
 
 
+# ================================================================
+# Step control utilities (resume / skip mechanism)
+# ================================================================
+
+def step_done(step_name):
+    """
+    Check whether a pipeline step has been successfully completed.
+
+    A step is considered completed if a corresponding '.done' file exists.
+    """
+    return os.path.exists(f"{step_name}.done")
+
+
+def mark_step_done(step_name):
+    """
+    Mark a pipeline step as completed by creating a '.done' file.
+    """
+    with open(f"{step_name}.done", "w") as f:
+        f.write(f"Completed at {timestamp()}\n")
+
+
+def should_skip(step_name, args):
+    """
+    Determine whether a pipeline step should be skipped.
+
+    A step is skipped if:
+    - It is explicitly listed in --skip, or
+    - --resume is enabled and the step has already been completed.
+    """
+    if step_name in args.skip:
+        print(f"[SKIP] {step_name} (explicitly skipped by user)")
+        return True
+
+    if args.resume and step_done(step_name):
+        print(f"[SKIP] {step_name} (already completed)")
+        return True
+
+    return False
+
+
+# ================================================================
+# Main pipeline
+# ================================================================
+
 def main():
 
-    parser = argparse.ArgumentParser(description="NLRcraft: Identify and classify plant NLRs based on structures.")
-    
-    parser.add_argument("-i", "--structs", required=True)
-    parser.add_argument("-d", "--ids", required=True)
-    parser.add_argument("-p", "--plddt", default=60, type=int)
+    parser = argparse.ArgumentParser(
+        description="NLRcraft: Identify and classify plant NLRs based on protein structures."
+    )
+
+    parser.add_argument(
+        "-i", "--structs", required=True,
+        help="Directory containing predicted protein structures (PDB/mmCIF)."
+    )
+    parser.add_argument(
+        "-d", "--ids", required=True,
+        help="File containing target protein IDs."
+    )
+    parser.add_argument(
+        "-p", "--plddt", type=int, default=60,
+        help="pLDDT cutoff for structure filtering (default: 60)."
+    )
+    parser.add_argument(
+        "--resume", action="store_true",
+        help="Resume pipeline and skip completed steps."
+    )
+    parser.add_argument(
+        "--skip", nargs="+", default=[],
+        help="Skip specific steps (e.g. step1 step3.2 step4)."
+    )
 
     args = parser.parse_args()
 
     structs = args.structs
-    plddt = str(args.plddt)
     id_file = args.ids
+    plddt = str(args.plddt)
 
-
+    # directories
     base_dir = os.path.dirname(os.path.abspath(__file__))
-    script_dir = f"{base_dir}/scripts"
+    script_dir = os.path.join(base_dir, "scripts")
     work_dir = os.getcwd()
 
-    domain_folds = f"{base_dir}/domains_pdb"
+    domain_folds = os.path.join(base_dir, "domains_pdb")
 
-    # output files
+    # --------------------------------------------------------------
+    # Output files (explicit domain-level vs protein-level semantics)
+    # --------------------------------------------------------------
     filtered_structs = "structs_filter"
-    aln_results = "aln_all.txt"
-    aln_results_filter = "results_all.txt"
-    rf_predict_results = "rf_prediction.txt" # prediction by a random forest model
-    aln_results_rm_FPs = "results_all_rm_FPs.txt" # identifiaction results after removing non-NLR homologs (false positives)
+
+    aln_domain = "aln_all.txt"               # raw domain-level alignments
+    aln_filtered = "aln_filtered.txt"         # filtered domain-level alignments
+    results_all = "results_all.txt"           # protein-level inference (T / TN / Na)
+    rf_predict = "rf_prediction.txt"          # RF prediction scores
+    results_rm_FPs = "results_all_rm_FPs.txt" # protein-level results after FP removal
+
     nbs_position = "NBS_pos.tsv"
-    
 
-    # STEP 1: Foldseek DB building
-    run(["mkdir", "step1_domain_db"], "mkdir step1_domain_db")
 
-    run(["cd", "step1_domain_db"], "cd step1_domain_db")
+    # ================================================================
+    # STEP 1: Domain database building
+    # ================================================================
+    if not should_skip("step1", args):
 
-    run(
-        ["foldseek", "createdb", domain_folds, "nlrDB"],
-        "STEP 1: Build Foldseek database"
-    )
+        os.makedirs("step1_domain_db", exist_ok=True)
 
-    # STEP 2 Filter predicted structures based on pLDDT values
-    run(["cd", ".."], "")
+        run(
+            ["foldseek", "createdb", domain_folds, "nlrDB"],
+            "STEP 1: Build Foldseek domain database",
+            cwd="step1_domain_db"
+        )
 
-    run(["mkdir", "step2_plddt_filter"], "mkdir step2_plddt_filter")
+        mark_step_done("step1")
 
-    run(["cd", "step2_plddt_filter"], "cd step2_plddt_filter")
 
-    run(
-        ["python", f"{script_dir}/run_plddt_filter.py", plddt, structs, filtered_structs],
-        "STEP 2: Filter structures based on pLDDT values"
-    )
+    # ================================================================
+    # STEP 2: pLDDT-based structure filtering
+    # ================================================================
+    if not should_skip("step2", args):
 
-    # STEP 3 Identification
-    run(["cd", ".."], "")
+        os.makedirs("step2_plddt_filter", exist_ok=True)
 
-    run(["mkdir", "step3_identification"], "mkdir step3_identification")
+        run(
+            [
+                "python", f"{script_dir}/run_plddt_filter.py",
+                plddt, structs, filtered_structs
+            ],
+            "STEP 2: Filter structures based on pLDDT",
+            cwd="step2_plddt_filter"
+        )
 
-    run(["cd", "step3_identification"], "cd step3_identification")
+        mark_step_done("step2")
 
-    # STEP 3.1 Foldseek alignment
-    run(
-        [
-            "foldseek", "easy-search", f"{work_dir}/step2_plddt_filter/{filtered_structs}", f"{work_dir}/step1_domain_db/nlrDB", aln_results, "tmp",
-            "--format-output",
-            "query,target,fident,alnlen,qcov,tcov,mismatch,gapopen,qstart,qend,"
-            "tstart,tend,evalue,bits,prob,lddt,alntmscore,qtmscore,ttmscore"
-        ],
-        "STEP 3.1: Run Foldseek alignment"
-    )
 
-    # STEP 3.2 Alignment results extraction
-    # python extract_align_results.py aln.txt ids.txt results_all.txt -p 1 -tc 0.8 -tm 0.5 -e 0.001
-    # default prob_cutoff=1.0, tcov_cutoff=0.8, tm_cutoff=.5, evalue_cutoff=0.001
-    run(
-        ["python", f"{script_dir}/extract_align_results.py", aln_results, {id_file}, aln_results_filter, "-p", "0.99"],
-        "STEP 3.2: Extract alignment results (filter by parameteres)"
-    )
+    # ================================================================
+    # STEP 3: NLR identification by structural alignment
+    # ================================================================
+    os.makedirs("step3_identification", exist_ok=True)
 
-    # STEP 3.3 Remove non-NLR homologs
-    run(
-        ["Rscript", f"{script_dir}/R/rf_predict.R", f"{script_dir}/R/final_rf_model_undersampling.rds", aln_results_filter, rf_predict_results],
-        "STEP 3.3.1: Random Forest prediction"
-    )
+    # STEP 3.1 Domain-level structural alignment
+    if not should_skip("step3.1", args):
 
-    run(
-        ["python", f"{script_dir}/rm_FPs.py", "-i", aln_results_filter, "-p", rf_predict_results, "-o", aln_results_rm_FPs],
-        "STEP 3.3.2: Remove false positives"
-    )
+        run(
+            [
+                "foldseek", "easy-search",
+                f"{work_dir}/step2_plddt_filter/{filtered_structs}",
+                f"{work_dir}/step1_domain_db/nlrDB",
+                aln_domain,
+                "tmp",
+                "--format-output",
+                "query,target,fident,alnlen,qcov,tcov,mismatch,gapopen,"
+                "qstart,qend,tstart,tend,evalue,bits,prob,lddt,"
+                "alntmscore,qtmscore,ttmscore"
+            ],
+            "STEP 3.1: Domain-level structural alignment (Foldseek)",
+            cwd="step3_identification"
+        )
 
-    # STEP 4 Classification
-    run(["cd", ".."], "")
+        mark_step_done("step3.1")
 
-    run(["mkdir", "step4_classification"], "mkdir step4_classification")
 
-    run(["cd", "step4_classification"], "cd step4_classification")
+    # STEP 3.2 Filter domain-level alignments
+    if not should_skip("step3.2", args):
 
-    # STEP 4.1 Get NBS position
-    run(
-        ["python", f"{script_dir}/extract_NBS_pos.py", "-a", f"{work_dir}/step3_identification/aln_filtered.txt", "-i", id_file, "-o", nbs_position],
-        "STEP 4.1: Extract NBS location"
-    )
+        run(
+            [
+                "python", f"{script_dir}/extract_align_results.py",
+                aln_domain, id_file, aln_filtered,
+                "-p", "0.99"
+            ],
+            "STEP 3.2: Filter domain-level alignments",
+            cwd="step3_identification"
+        )
 
-    # STEP 4.2 Split domains based on NBS location
-    os.makedirs("split_domains", exist_ok=True)
+        mark_step_done("step3.2")
 
-    run(
-        ["python", f"{script_dir}/split_pdb_by_NBS.py", "-n", nbs_position, "-p", f"{work_dir}/step2_plddt_filter/{filtered_structs}", "-o", "split_domains"],
-        "STEP 4.2: Split domains based on NBS location"
-    )
 
-'''
-    # STEP 4.3 Structural clustering
-    run(
-        ["bash", f"{script_dir}/run_NLR_domains_cluster.sh", "split_domains", args.script_dir],
-        "STEP 4.3: Structural clustering"
-    )
+    # STEP 3.3 Protein-level inference and false positive removal
+    if not should_skip("step3.3", args):
 
-    # STEP 4.4 Community detection & final classification
-    run(
-        ["Rscript", f"{args.script_dir}/R/network_community.R"],
-        "STEP 4.4: Community detection & final classification"
-    )
-'''
+        run(
+            [
+                "Rscript", f"{script_dir}/R/rf_predict.R",
+                f"{script_dir}/R/final_rf_model_undersampling.rds",
+                results_all, rf_predict
+            ],
+            "STEP 3.3.1: Random Forest prediction (protein-level)",
+            cwd="step3_identification"
+        )
 
-    print("\n NLRcraft Pipeline Finished Successfully!")
-    print("Output directory includes:")
-    print(f" - NLR identification: {work_dir}/step3_identification/{aln_results_rm_FPs}")
-    #print(f" - NLR classification: {work_dir}/step4_classification/{classification}")
+        run(
+            [
+                "python", f"{script_dir}/rm_FPs.py",
+                "-i", results_all,
+                "-p", rf_predict,
+                "-o", results_rm_FPs
+            ],
+            "STEP 3.3.2: Remove false positive NLR candidates",
+            cwd="step3_identification"
+        )
+
+        mark_step_done("step3.3")
+
+
+    # ================================================================
+    # STEP 4: NLR classification
+    # ================================================================
+    os.makedirs("step4_classification", exist_ok=True)
+
+    # STEP 4.1 Extract NBS (NB-ARC) positions
+    if not should_skip("step4.1", args):
+
+        run(
+            [
+                "python", f"{script_dir}/extract_NBS_pos.py",
+                "-a", f"{work_dir}/step3_identification/{aln_filtered}",
+                "-i", id_file,
+                "-o", nbs_position
+            ],
+            "STEP 4.1: Extract NBS (NB-ARC) positions",
+            cwd="step4_classification"
+        )
+
+        mark_step_done("step4.1")
+
+
+    # STEP 4.2 Split domains based on NBS position
+    if not should_skip("step4.2", args):
+
+        os.makedirs("split_domains", exist_ok=True)
+
+        run(
+            [
+                "python", f"{script_dir}/split_pdb_by_NBS.py",
+                "-n", nbs_position,
+                "-p", f"{work_dir}/step2_plddt_filter/{filtered_structs}",
+                "-o", "split_domains"
+            ],
+            "STEP 4.2: Split N-terminal and NB-ARC domains",
+            cwd="step4_classification"
+        )
+
+        mark_step_done("step4.2")
+
+
+    """
+    STEP 4.3: Structural clustering of N-terminal domains
+    STEP 4.4: Community detection and final classification
+    """
+
+    print("\n[NLRcraft] Pipeline finished successfully.")
+    print("Key outputs:")
+    print(f" - NLR identification: step3_identification/{results_rm_FPs}")
+    print(f" - NBS positions: step4_classification/{nbs_position}")
 
 
 if __name__ == "__main__":
