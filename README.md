@@ -92,7 +92,7 @@ This is a pipeline to be run on unix based machines. The following software must
 If you use **NLRcraft** in your research, please cite:
 
 > Jiang, Q. *et al.*  
-> **NLRcraft: structure-based identification and classification of plant NLR proteins**.  
+> **Structural conservation reveals cryptic homology and reshapes the evolutionary history of plant NLR immune receptors**.  
 > *Manuscript in preparation.*
 
 ## 📬 Contact
