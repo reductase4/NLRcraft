@@ -2,7 +2,6 @@
 
 **NLRcraft** is a structure-based pipeline for NLR identification and classification.
 
----
 
 ## ✨ Features
 
@@ -11,7 +10,6 @@
 - Machine-learning-assisted false positive removal
 - Structural classification of NLRs based on N-terminal domain clustering
 
----
 
 ## 🧭 Pipeline Overview
 
@@ -32,7 +30,6 @@ NLRcraft consists of **four major steps**:
    - Split N-terminal domains
    - Cluster N-terminal domains for classification
 
----
 
 ## 📂 Directory Structure
 
@@ -58,6 +55,7 @@ python NLRcraft.py \
   --ids protein_ids.txt \
   --plddt 60
 ```
+
 ## 📄 Key Output Files
 
 | File                     | Description                                        |
