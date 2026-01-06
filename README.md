@@ -82,10 +82,12 @@ NLR inference was subsequently performed by integrating structural hits to the T
 This is a pipeline to be run on unix based machines. The following software must be available in your path. 
 
 -   [Foldseek](https://github.com/steineggerlab/foldseek)
--   R version &gt;= 4.4.1
+-   Python ≥ 3.12.3
+-   R version ≥ 4.4.1
 -   R package
     -   [tidyverse](https://www.tidyverse.org/)
     -   [randomForest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf)
+
 
 ## 📖 Citation
 
