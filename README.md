@@ -5,7 +5,7 @@
 
 ## ✨ Features
 
-- Structure-based NLR detection
+- Structure-based domain detection
 - Quality control of predicted structures
 - Machine-learning-assisted false positive removal
 - Structural classification of NLRs based on N-terminal domain clustering
@@ -82,8 +82,11 @@ NLR inference was subsequently performed by integrating structural hits to the T
 This is a pipeline to be run on unix based machines. The following software must be available in your path. 
 
 -   [Foldseek](https://github.com/steineggerlab/foldseek)
--   Python ≥ 3.12.3
+-   Python ≥ 3.8
 -   R version ≥ 4.4.1
+-   Python package
+    -   biopython
+    -   pandas
 -   R package
     -   [tidyverse](https://www.tidyverse.org/)
     -   [randomForest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf)

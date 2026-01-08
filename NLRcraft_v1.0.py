@@ -127,8 +127,8 @@ def main():
 
     args = parser.parse_args()
 
-    structs = args.structs
-    id_file = args.ids
+    structs = os.path.abspath(args.structs)
+    id_file = os.path.abspath(args.ids)
     plddt = str(args.plddt)
 
     # directories
@@ -145,9 +145,9 @@ def main():
 
     aln_domain = "aln_all.txt"               # raw domain-level alignments
     aln_filtered = "aln_filtered.txt"         # filtered domain-level alignments
-    results_all = "results_all.txt"           # protein-level inference (T / TN / Na)
-    rf_predict = "rf_prediction.txt"          # RF prediction scores
-    results_rm_FPs = "results_all_rm_FPs.txt" # protein-level results after FP removal
+    results_all = "results_all.txt"           # protein-level inference (N / T / TN / Na)
+    rf_predict = "rf_prediction.txt"          # prediction by a randomForest model
+    results_rm_FPs = "results_all_rm_FPs.txt" # inference results after FP removal
 
     nbs_position = "NBS_pos.tsv"
 
@@ -214,13 +214,16 @@ def main():
         mark_step_done("step3.1")
 
 
-    # STEP 3.2 Filter domain-level alignments
+    # STEP 3.2 Filter domain-level alignments and Protein-level inference
     if not should_skip("step3.2", args):
 
+        # python extract_align_results.py aln.txt ids.txt results_all.txt -p 1 -tc 0.8 -tm 0.5 -e 0.001
+        # default parameter: prob_cutoff=1.0, tcov_cutoff=0.8, tm_cutoff=.5, evalue_cutoff=0.001
+        # Automatically generate "aln_filtered.txt"
         run(
             [
                 "python", f"{script_dir}/extract_align_results.py",
-                aln_domain, id_file, aln_filtered,
+                aln_domain, id_file, results_all,
                 "-p", "0.99"
             ],
             "STEP 3.2: Filter domain-level alignments",
@@ -230,16 +233,16 @@ def main():
         mark_step_done("step3.2")
 
 
-    # STEP 3.3 Protein-level inference and false positive removal
+    # STEP 3.3 NLR/non-NLR classification prediction and false positive removal
     if not should_skip("step3.3", args):
 
         run(
             [
                 "Rscript", f"{script_dir}/R/rf_predict.R",
                 f"{script_dir}/R/final_rf_model_undersampling.rds",
-                results_all, rf_predict
+                aln_filtered, rf_predict
             ],
-            "STEP 3.3.1: Random Forest prediction (protein-level)",
+            "STEP 3.3.1: Random Forest prediction (NLR/non-NLR)",
             cwd="step3_identification"
         )
 
