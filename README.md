@@ -85,8 +85,8 @@ This is a pipeline to be run on unix based machines. The following software must
 -   Python ≥ 3.8
 -   R version ≥ 4.4.1
 -   Python package
-    -   biopython
-    -   pandas
+    -   [biopython](https://github.com/biopython/biopython)
+    -   [pandas](https://github.com/pandas-dev/pandas)
 -   R package
     -   [tidyverse](https://www.tidyverse.org/)
     -   [randomForest](https://cran.r-project.org/web/packages/randomForest/randomForest.pdf)
