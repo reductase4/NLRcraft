@@ -46,6 +46,7 @@ NLRcraft/
 │   └── R/
 │       ├── rf_predict.R
 │       └── final_rf_model_undersampling.rds
+│       └── subclass_assignment.R
 ```
 ## 🚀 Usage
 
