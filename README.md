@@ -45,7 +45,7 @@ NLRcraft/
 │   ├── split_pdb_by_NBS.py
 │   └── R/
 │       ├── rf_predict.R
-│       └── final_rf_model_undersampling.rds
+│       ├── final_rf_model_undersampling.rds
 │       └── subclass_assignment.R
 ```
 ## 🚀 Usage
