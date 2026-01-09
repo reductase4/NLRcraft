@@ -149,7 +149,7 @@ def main():
     rf_predict = "rf_prediction.txt"          # prediction by a randomForest model
     results_rm_FPs = "results_all_rm_FPs.txt" # inference results after FP removal
 
-    nbs_position = "NBS_pos.tsv"
+    nbs_position = "NBS_pos_alignment.txt"
 
 
     # ================================================================
@@ -245,7 +245,7 @@ def main():
             "STEP 3.3.1: Random Forest prediction (NLR/non-NLR)",
             cwd="step3_identification"
         )
-
+        # Automatically generate "NLR_ids.txt"
         run(
             [
                 "python", f"{script_dir}/rm_FPs.py",
@@ -265,17 +265,17 @@ def main():
     # ================================================================
     os.makedirs("step4_classification", exist_ok=True)
 
-    # STEP 4.1 Extract NBS (NB-ARC) positions
+    # STEP 4.1 Extract NBS (NB-ARC) positions from alignment file
     if not should_skip("step4.1", args):
 
         run(
             [
                 "python", f"{script_dir}/extract_NBS_pos.py",
                 "-a", f"{work_dir}/step3_identification/{aln_filtered}",
-                "-i", id_file,
+                "-i", f"{work_dir}/step3_identification/NLR_ids.txt",
                 "-o", nbs_position
             ],
-            "STEP 4.1: Extract NBS (NB-ARC) positions",
+            "STEP 4.1: Extract NBS (NB-ARC) positions from alignment file",
             cwd="step4_classification"
         )
 
@@ -283,16 +283,17 @@ def main():
 
 
     # STEP 4.2 Split domains based on NBS position
+    # Automatically generate "NBS_pos_original_pdb.txt"
     if not should_skip("step4.2", args):
 
-        os.makedirs("split_domains", exist_ok=True)
+        os.makedirs("step4_classification/split_domains", exist_ok=True)
 
         run(
             [
                 "python", f"{script_dir}/split_pdb_by_NBS.py",
                 "-n", nbs_position,
                 "-p", f"{work_dir}/step2_plddt_filter/{filtered_structs}",
-                "-o", "split_domains"
+                "-o", f"{work_dir}/step4_classification/split_domains",
             ],
             "STEP 4.2: Split N-terminal and NB-ARC domains",
             cwd="step4_classification"

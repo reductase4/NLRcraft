@@ -15,7 +15,7 @@ def remove_false_positives(results_file, predicted_file, output_file):
                 non_nlr_ids.add(protein_id)
 
     # Replace results predicted as non-NLR homologs
-    with open(results_file, 'r') as infile, open(output_file, 'w') as outfile:
+    with open(results_file, 'r') as infile, open(output_file, 'w') as outfile, open("NLR_ids.txt", 'w') as outfile2:
         for line in infile:
             line = line.rstrip('\n')
             row = line.split('\t')
@@ -31,6 +31,9 @@ def remove_false_positives(results_file, predicted_file, output_file):
             # save
             new_line = '\t'.join(row) + '\n'
             outfile.write(new_line)
+
+            if row[1] != 'Na':
+                outfile2.write(row[0] + '\n')
 
 def main():
     parser = argparse.ArgumentParser(description='Process protein prediction results')

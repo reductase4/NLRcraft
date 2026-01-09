@@ -50,9 +50,9 @@ NLRcraft/
 ## 🚀 Usage
 
 ```text
-python NLRcraft.py \
-  --structs predicted_structures \
-  --ids protein_ids.txt \
+python NLRcraft.py 
+  --structs predicted_structures 
+  --ids protein_ids.txt 
   --plddt 60
 ```
 
