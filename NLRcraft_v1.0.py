@@ -150,6 +150,7 @@ def main():
     results_rm_FPs = "results_all_rm_FPs.txt" # inference results after FP removal
 
     nbs_position = "NBS_pos_alignment.txt"
+    nlr_annotation = "NLR_annotation.tsv"
 
 
     # ================================================================
@@ -301,16 +302,44 @@ def main():
 
         mark_step_done("step4.2")
 
+    #STEP 4.3: Structural clustering of N-terminal domains
+    if not should_skip("step4.3", args):
 
-    """
-    STEP 4.3: Structural clustering of N-terminal domains
-    STEP 4.4: Community detection and final classification
-    """
+        os.makedirs("step4_classification/cluster", exist_ok=True)
+
+        run(
+            [
+                "bash", f"{script_dir}/run_NTD_cluster.sh", 
+                f"{work_dir}/step4_classification/split_domains/N_terminal", 
+                f"{base_dir}/NTD_rep_structs"
+            ],
+            "STEP 4.3: Structural clustering of N-terminal domains",
+            cwd="step4_classification/cluster"
+        )
+
+        mark_step_done("step4.3")
+
+    #STEP 4.4: subclass assignment
+    if not should_skip("step4.4", args):
+
+        run(
+            [
+                "Rscript", f"{script_dir}/R/subclass_assignment.R",
+                f"{work_dir}/step3_identification/{results_rm_FPs}",
+                f"{base_dir}/NTD_rep_structs.csv",
+                "cluster/NTD_cluster_new.tsv",
+                nlr_annotation
+            ],
+            "STEP 4.4: subclass assignment",
+            cwd="step4_classification"
+        )
+
+        mark_step_done("step4.4")
 
     print("\n[NLRcraft] Pipeline finished successfully.")
     print("Key outputs:")
     print(f" - NLR identification: step3_identification/{results_rm_FPs}")
-    print(f" - NBS positions: step4_classification/{nbs_position}")
+    print(f" - NLR classification: step4_classification/{nlr_annotation}")
 
 
 if __name__ == "__main__":

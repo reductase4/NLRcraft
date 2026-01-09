@@ -23,7 +23,7 @@ NLRcraft consists of **four major steps**:
 
 3. **NLR identification by structural alignment**  
    - Perform domain-level structural alignments
-   - Infer protein-level NLR status (N / T / TN / Na)
+   - Infer protein-level NLR status (N / T / TN / NA)
    - Remove false positives using a Random Forest model
 
 4. **NLR classification by structural clustering**  
@@ -62,7 +62,7 @@ python NLRcraft.py
 | ------------------------ | -------------------------------------------------- |
 | `aln_all.txt`            | Raw structural alignment results        |
 | `aln_filtered.txt`       | Filtered structural alignment results                   |
-| `results_all.txt`        | NLR inference (N / T / TN / Na)          |
+| `results_all.txt`        | NLR inference (N / T / TN / NA)          |
 | `results_all_rm_FPs.txt` | NLR inference results after false positive removal |
 | `NLR_annotation.tsv`     | Classification of NLRs                   |
 
@@ -75,7 +75,7 @@ NLR inference was subsequently performed by integrating structural hits to the T
 - **N**: NLR proteins containing a structurally supported NB-ARC domain.
 - **T**: TX proteins lacking an NB-ARC domain but carrying a TIR domain.
 - **TN**: TIR-NLR proteins containing both TIR and NB-ARC domains.
-- **Na**: Non-NLR proteins lacking structural support for NLR-related domains.
+- **NA**: Non-NLR proteins lacking structural support for NLR-related domains.
 
 ## 🔧 Dependencies
 

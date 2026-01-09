@@ -24,7 +24,7 @@ def remove_false_positives(results_file, predicted_file, output_file):
             if len(row) >= 2 and row[0] in non_nlr_ids:
                 original = row[1]
                 if original == 'N':
-                    row[1] = 'Na'
+                    row[1] = 'NA'
                 elif original == 'TN':
                     row[1] = 'T'
             
@@ -32,7 +32,7 @@ def remove_false_positives(results_file, predicted_file, output_file):
             new_line = '\t'.join(row) + '\n'
             outfile.write(new_line)
 
-            if row[1] != 'Na':
+            if row[1] != 'NA':
                 outfile2.write(row[0] + '\n')
 
 def main():

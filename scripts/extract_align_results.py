@@ -1,4 +1,4 @@
-# v2: 1.'PF01582'='TIR', 'PF13676'='TIR2', 'PF00931'='NBD'; 2."prob = float(data[12])" changed to "prob = float(data[14])", for 'qcov' & 'tcov' added in align cmd; 3.results='' > results='Na'
+# v2: 1.'PF01582'='TIR', 'PF13676'='TIR2', 'PF00931'='NBD'; 2."prob = float(data[12])" changed to "prob = float(data[14])", for 'qcov' & 'tcov' added in align cmd; 3.results='' > results='NA'
 # v3: + tcov_cutoff, tm_cutoff, evalue_cutoff
 # v4: + prob_cutoff, use argparse & default values
 # v5: nlr_cluster_file => id_file
@@ -21,19 +21,19 @@ def extract_results_from_aln(file_path, prob_cutoff,tcov_cutoff, tm_cutoff, eval
             
             # results[query_id] = '', 'T', 'N', 'TN'
             if query_id not in results.keys():
-                results[query_id] = 'Na'
+                results[query_id] = 'NA'
             # 'PF01582'='TIR', 'PF13676'='TIR2', 'PF00931'='NBD'
             if prob >= prob_cutoff and tcov >= tcov_cutoff and alnTM >= tm_cutoff and evalue < evalue_cutoff:
                 filtered_file.write(line)
                 if 'PF01582' in target or 'PF13676' in target:
-                    if results[query_id] == 'Na':
+                    if results[query_id] == 'NA':
                         results[query_id] = 'T'
                     elif results[query_id] == 'T':
                         results[query_id] = 'T'
                     else:
                         results[query_id] = 'TN'
                 elif 'PF00931' in target:
-                    if results[query_id] == 'Na':
+                    if results[query_id] == 'NA':
                         results[query_id] = 'N'
                     elif results[query_id] == 'N':
                         results[query_id] = 'N'
@@ -51,7 +51,7 @@ def update_nlr_domains(file_path, results, output_file):
             for line in file:
                 line = line.strip()
                 query_id = line.split('.')[0]
-                nlr_domain = results.get(query_id, 'Na')
+                nlr_domain = results.get(query_id, 'NA')
                 out_file.write(query_id + '\t' + nlr_domain + '\n')
 
 def main():
