@@ -39,7 +39,9 @@ def main():
     structure = structure_parser.get_structure("input", args.input_file)
 
     # Write filtered structure to .pdb file
-    output_pdb = args.output_file if args.output_file.endswith(".pdb") else args.output_file + ".pdb"
+    #output_pdb = args.output_file if args.output_file.endswith(".pdb") else args.output_file + ".pdb" ==> error: ".cif.pdb"
+    base = os.path.splitext(args.output_file)[0]
+    output_pdb = base + ".pdb"
     io = PDBIO()
     io.set_structure(structure)
     io.save(output_pdb, select=BFactorFilter(args.cutoff))
