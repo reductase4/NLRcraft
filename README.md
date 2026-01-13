@@ -35,13 +35,13 @@ NLRcraft consists of **four major steps**:
 
 ```text
 NLRcraft/
-├── NLRcraft.py
-├── domains_pdb/               # Reference NLR domain structures
-├── pre_NTD_structs/           # 
-├── pre_nlr_subclass_assignment.csv  #
+├── NLRcraft.py                # Main controller script coordinating the entire pipeline
+├── domains_pdb/               # Reference NB-ARC and TIR domain structures used for foldseek domain search
+├── pre_NTD_structs/           # Predefined reference N-terminal domain (NTD) structures for classification
+├── pre_nlr_subclass_assignment.csv  # Mapping table assigning predefined NTD representatives to subclass labels
 ├── test/
 │   ├── test_data
-│   └── results                # annotation results
+│   └── results                # Example output for demonstration / sanity checking
 ├── scripts/
 │   ├── run_plddt_filter.py
 │   ├── extract_align_results.py
@@ -59,8 +59,9 @@ NLRcraft/
 python NLRcraft.py 
   -i/--structs predicted_structures 
   -d/--ids protein_ids.txt 
-  -p/--plddt 60
-  --resume
+  -p/--plddt 60                  # Minimum pLDDT score threshold (AlphaFold / ESMFold confidence metric). Residues below the threshold are removed before structural alignment
+  --resume *(optional)*                      # Continue previous interrupted run; skips completed steps
+  --skip step1 step3.2 step4 *(optional)*    # Explicitly skip selected steps in the pipeline
 ```
 
 ## 📄 Key Output Files
