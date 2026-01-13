@@ -28,7 +28,7 @@ NLRcraft consists of **four major steps**:
 
 4. **NLR classification by structural clustering**  
    - Split N-terminal domains
-   - Cluster N-terminal domains for classification
+   - Cluster N-terminal domains for classification (CC-NLR / TIR-NLR / CCG10-NLR / CCR-NLR)
 
 
 ## 📂 Directory Structure
