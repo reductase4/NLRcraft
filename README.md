@@ -60,8 +60,8 @@ python NLRcraft.py
   -i/--structs predicted_structures 
   -d/--ids protein_ids.txt 
   -p/--plddt 60                  # Minimum pLDDT score threshold (AlphaFold / ESMFold confidence metric). Residues below the threshold are removed before structural alignment
-  --resume *(optional)*                      # Continue previous interrupted run; skips completed steps
-  --skip step1 step3.2 step4 *(optional)*    # Explicitly skip selected steps in the pipeline
+  --resume (optional)                      # Continue previous interrupted run; skips completed steps
+  --skip step1 step3.2 step4 (optional)    # Explicitly skip selected steps in the pipeline
 ```
 
 ## 📄 Key Output Files
