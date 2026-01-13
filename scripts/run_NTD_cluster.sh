@@ -13,8 +13,10 @@ LOG="cluster.log"
 mkdir -p "$PDB_DIR"
 
 # copy pdbs
-cp "$PDB_TARGET"/*.pdb "$PDB_DIR"/
-cp "$PDB_REF"/*.pdb    "$PDB_DIR"/
+#cp "$PDB_TARGET"/*.pdb "$PDB_DIR"/
+#cp "$PDB_REF"/*.pdb    "$PDB_DIR"/
+rsync -a "$PDB_TARGET"/ "$PDB_DIR"/
+rsync -a "$PDB_REF"/    "$PDB_DIR"/
 
 echo "[INFO] Clustering NTD structures" >> "$LOG"
 foldseek easy-cluster "$PDB_DIR" NTD tmp -c ${CLUSTER_CUTOFFS} -e ${CLUSTER_EVALUES} >> "$LOG" 2>&1

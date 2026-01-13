@@ -27,8 +27,8 @@ colnames(cluster) <- c("clusterID", "proteinID")
 # sublass assignment
 nlr_subclass <- nlr %>%
   left_join(cluster, by = c("ID" = "proteinID")) %>%
-  left_join(NTD_rep %>% select(Max_pLDDT_ID, subclass),
-            by = c("clusterID" = "Max_pLDDT_ID"))
+  left_join(NTD_rep %>% select(UniProtID, subclass),
+            by = c("clusterID" = "UniProtID"))
 
 # save data
 write.table(nlr_subclass, output_file,quote=F,row.names = F, sep="\t")
