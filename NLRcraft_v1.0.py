@@ -311,7 +311,7 @@ def main():
             [
                 "bash", f"{script_dir}/run_NTD_cluster.sh", 
                 f"{work_dir}/step4_classification/split_domains/N_terminal", 
-                f"{base_dir}/NTD_rep_structs"
+                f"{base_dir}/pre_NTD_structs"
             ],
             "STEP 4.3: Structural clustering of N-terminal domains",
             cwd="step4_classification/cluster"
@@ -326,7 +326,7 @@ def main():
             [
                 "Rscript", f"{script_dir}/R/subclass_assignment.R",
                 f"{work_dir}/step3_identification/{results_rm_FPs}",
-                f"{base_dir}/NTD_rep_structs.csv",
+                f"{base_dir}/pre_nlr_subclass_assignment.csv",
                 "cluster/NTD_cluster_new.tsv",
                 nlr_annotation
             ],

@@ -37,6 +37,11 @@ NLRcraft consists of **four major steps**:
 NLRcraft/
 ├── NLRcraft.py
 ├── domains_pdb/               # Reference NLR domain structures
+├── pre_NTD_structs/           # 
+├── pre_nlr_subclass_assignment.csv  #
+├── test/
+│   ├── test_data
+│   └── results                # annotation results
 ├── scripts/
 │   ├── run_plddt_filter.py
 │   ├── extract_align_results.py
@@ -52,9 +57,10 @@ NLRcraft/
 
 ```text
 python NLRcraft.py 
-  --structs predicted_structures 
-  --ids protein_ids.txt 
-  --plddt 60
+  -i/--structs predicted_structures 
+  -d/--ids protein_ids.txt 
+  -p/--plddt 60
+  --resume
 ```
 
 ## 📄 Key Output Files
@@ -65,7 +71,7 @@ python NLRcraft.py
 | `aln_filtered.txt`       | Filtered structural alignment results                   |
 | `results_all.txt`        | NLR inference (N / T / TN / NA)          |
 | `results_all_rm_FPs.txt` | NLR inference results after false positive removal |
-| `NLR_annotation.tsv`     | Classification of NLRs                   |
+| `NLR_annotation.tsv`     | Classification of NLRs (CC-NLR / TIR-NLR / CCG10-NLR / CCR-NLR)                   |
 
 #### Notes on NLR Inference
 
