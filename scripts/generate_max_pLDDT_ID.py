@@ -4,7 +4,13 @@ from Bio.PDB import PDBParser
 
 def parse_pdb_plddt(pdb_file):
     """
-    计算 PDB 文件中所有原子的 pLDDT 平均值。
+    Compute the average pLDDT score for a given PDB structure.
+
+    Notes
+    -----
+    - pLDDT values are stored in the B-factor field of predicted structures (e.g. AlphaFold).
+    - Non-numeric or missing B-factors are ignored.
+    - Returns None if the file cannot be parsed.
     """
     parser = PDBParser(QUIET=True)
     try:
@@ -20,7 +26,19 @@ def parse_pdb_plddt(pdb_file):
 
 def calculate_plddt(structs_dir, uniprot_ids):
     """
-    根据 Uniprot IDs 计算对应 PDB 文件的平均 pLDDT 值。
+    Compute average pLDDT values for a set of UniProt IDs.
+
+    Parameters
+    ----------
+    structs_dir : str
+        Directory containing PDB files named as <UniProtID>.pdb
+    uniprot_ids : list[str]
+        UniProt IDs to evaluate
+
+    Returns
+    -------
+    dict
+        { UniProtID : avg_pLDDT }
     """
     plddt_scores = {}
     for uniprot_id in uniprot_ids:
@@ -34,7 +52,11 @@ def calculate_plddt(structs_dir, uniprot_ids):
 
 def load_plddt_scores(plddt_file):
     """
-    从文件中加载 pLDDT 值。
+    Load precomputed pLDDT scores from file.
+
+    Expected format
+    ---------------
+    <UniProtID>\t<pLDDT>
     """
     plddt_scores = {}
     with open(plddt_file, "r") as f:
@@ -45,19 +67,30 @@ def load_plddt_scores(plddt_file):
 
 def process_clusters(cluster_file, structs_dir, output_file, plddt_file=None):
     """
-    处理聚类文件，替换 repID 为平均 pLDDT 值最大的蛋白。
+    Get proteinID with the highest pLDDT for each cluster.
+
+    Workflow
+    --------
+    1. Read cluster assignments
+    2. Compute or load per-protein pLDDT
+    3. Select best representative for each cluster (max pLDDT)
+    4. Write updated cluster table
+
+    Output format
+    -------------
+    clusterID  max_pLDDT_ID  proteinID
     """
-    # 读取聚类文件
+    # parse cluster file
     cluster_map = {}
     with open(cluster_file, "r") as f:
         for line in f:
             rep_id, uniprot_id = line.strip().split("\t")
             cluster_map.setdefault(rep_id, []).append(uniprot_id)
 
-    # 收集所有 uniprotID
+    # collect all proteins across clusters
     all_uniprot_ids = {uniprot_id for ids in cluster_map.values() for uniprot_id in ids}
 
-    # 计算或加载 pLDDT 值
+    # calculate pLDDT or load from file
     if plddt_file:
         print(f"Loading pLDDT values from {plddt_file}...")
         plddt_scores = load_plddt_scores(plddt_file)
@@ -65,17 +98,16 @@ def process_clusters(cluster_file, structs_dir, output_file, plddt_file=None):
         print("Calculating pLDDT values...")
         plddt_scores = calculate_plddt(structs_dir, all_uniprot_ids)
 
-        # 输出所有 uniprotID 对应的平均 pLDDT 值
+        # save computed pLDDT values
         with open("plddt_scores.tsv", "w") as f:
             for uniprot_id, plddt in sorted(plddt_scores.items()):
                 f.write(f"{uniprot_id}\t{plddt:.2f}\n")
 
-    # 替换 repID 为平均 pLDDT 值最大的蛋白
+    # get cluster representatives (max pLDDT)
     print("Replacing repID with highest pLDDT...")
     with open(output_file, "w") as f:
         f.write(f"clusterID\tmax_pLDDT\tproteinID\n")
         for rep_id, uniprot_ids in cluster_map.items():
-            # 计算该 cluster 中的最高 pLDDT 值
             best_id = max(uniprot_ids, key=lambda x: plddt_scores.get(x, -1))
             for uniprot_id in uniprot_ids:
                 f.write(f"{rep_id}\t{best_id}\t{uniprot_id}\n")  # 写入文件
@@ -83,7 +115,7 @@ def process_clusters(cluster_file, structs_dir, output_file, plddt_file=None):
     print(f"Finished! Results saved to {output_file}.")
 
 def main():
-    parser = argparse.ArgumentParser(description="Process NLR clusters based on pLDDT values.")
+    parser = argparse.ArgumentParser(description="Select cluster representatives based on pLDDT values.")
     parser.add_argument("-c", "--cluster_file", required=True, help="Input cluster file (e.g., nlr_cluster.tsv).")
     parser.add_argument("-s", "--structs_dir", help="Directory containing PDB files. Not required if --plddt_scores is provided.")
     parser.add_argument("-p", "--plddt_scores", help="Precomputed pLDDT scores file. Skips pLDDT calculation if provided.")
