@@ -42,12 +42,18 @@ NLRcraft/
 ├── test/
 │   ├── test_data
 │   └── results                # Example output for demonstration / sanity checking
+├── test_refPlantNLR/
+│   ├── test_data              # prv1_new, prv2_new：Modified structures with the extra NB-ARC domain (located after LRR) removed 
+│   └── results                
 ├── scripts/
 │   ├── run_plddt_filter.py
+│   ├── filter_low_plddt.py
 │   ├── extract_align_results.py
 │   ├── rm_FPs.py
 │   ├── extract_NBS_pos.py
 │   ├── split_pdb_by_NBS.py
+│   ├── run_NTD_cluster.sh
+│   ├── generate_max_pLDDT_ID.py
 │   └── R/
 │       ├── rf_predict.R
 │       ├── final_rf_model_undersampling.rds
@@ -89,7 +95,7 @@ NLR inference was subsequently performed by integrating structural hits to the T
 
 This is a pipeline to be run on unix based machines. The following software must be available in your path. 
 
--   [Foldseek](https://github.com/steineggerlab/foldseek)
+-   [Foldseek](https://github.com/steineggerlab/foldseek) ≥ 10.0
 -   Python ≥ 3.8
 -   R version ≥ 4.4.1
 -   Python package
