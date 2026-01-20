@@ -307,13 +307,26 @@ def main():
 
         os.makedirs("step4_classification/cluster", exist_ok=True)
 
+        # run cluster
         run(
             [
                 "bash", f"{script_dir}/run_NTD_cluster.sh", 
                 f"{work_dir}/step4_classification/split_domains/N_terminal", 
                 f"{base_dir}/pre_NTD_structs"
             ],
-            "STEP 4.3: Structural clustering of N-terminal domains",
+            "STEP 4.3.1: Structural clustering of N-terminal domains",
+            cwd="step4_classification/cluster"
+        )
+
+        # Identify representative NTD per cluster based on max pLDDT
+        run(
+            [
+                "python", f"{script_dir}/generate_max_pLDDT_ID.py", 
+                "-c", "NTD_cluster.tsv", 
+                "-s", "NTD_structs", 
+                "-o", "NTD_cluster_with_max_pLDDT_ID.tsv"
+            ],
+            "STEP 4.3.2: Identify representative NTD per cluster based on max pLDDT",
             cwd="step4_classification/cluster"
         )
 
@@ -327,7 +340,8 @@ def main():
                 "Rscript", f"{script_dir}/R/subclass_assignment.R",
                 f"{work_dir}/step3_identification/{results_rm_FPs}",
                 f"{base_dir}/pre_nlr_subclass_assignment.csv",
-                "cluster/NTD_cluster_new.tsv",
+                "cluster/NTD_cluster_with_max_pLDDT_ID.tsv",
+                "cluster/plddt_scores.tsv",
                 nlr_annotation
             ],
             "STEP 4.4: subclass assignment",
